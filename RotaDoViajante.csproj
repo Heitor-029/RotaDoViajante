@@ -7,17 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Views\Passeio\**" />
-    <Compile Remove="Views\Usuario\**" />
-    <Content Remove="Views\Passeio\**" />
-    <Content Remove="Views\Usuario\**" />
-    <EmbeddedResource Remove="Views\Passeio\**" />
-    <EmbeddedResource Remove="Views\Usuario\**" />
-    <None Remove="Views\Passeio\**" />
-    <None Remove="Views\Usuario\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.8">

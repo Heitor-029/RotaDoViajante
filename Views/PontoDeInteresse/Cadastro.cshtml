@@ -1,0 +1,31 @@
+﻿@model RotaDoViajante.Models.PontoDeInteresse
+
+<h2>Cadastro de Ponto de Interesse</h2>
+
+<form asp-controller="PontoDeInteresse" asp-action="SalvarPonto">
+
+    <div class="mb-3">
+        <label asp-for="Localizacao"></label>
+        <input asp-for="Localizacao" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Descricao"></label>
+        <textarea asp-for="Descricao" class="form-control"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Altitude"></label>
+        <input asp-for="Altitude" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Latitude"></label>
+        <input asp-for="Latitude" class="form-control" />
+    </div>
+
+    <button class="btn btn-warning">
+        Salvar
+    </button>
+
+</form>
