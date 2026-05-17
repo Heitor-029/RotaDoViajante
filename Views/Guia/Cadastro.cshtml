@@ -1,0 +1,34 @@
+﻿@model RotaDoViajante.Models.Guia
+
+<h2>Cadastro de Guia</h2>
+
+<form asp-controller="Guia" asp-action="SalvarGuia">
+
+    <div class="mb-3">
+        <label asp-for="NomeGuia"></label>
+        <input asp-for="NomeGuia" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CPFGuia"></label>
+        <input asp-for="CPFGuia" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Experiencia"></label>
+        <input asp-for="Experiencia" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="EmailGuia"></label>
+        <input asp-for="EmailGuia" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="TelefoneGuia"></label>
+        <input asp-for="TelefoneGuia" class="form-control" />
+    </div>
+
+    <button class="btn btn-success">Salvar</button>
+
+</form>
