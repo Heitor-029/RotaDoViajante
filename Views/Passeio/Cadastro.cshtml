@@ -1,5 +1,42 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model RotaDoViajante.Models.Passeio
 @{
+    ViewData["Title"] = "Cadastro Passeio";
 }
+
+<h2>Cadastro Passeio</h2>
+
+<form asp-controller="Passeio" asp-action="SalvarPasseio">
+
+    <div class="mb-3">
+        <label asp-for="NomePasseio">Nome</label>
+        <input asp-for="NomePasseio" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Guia">Possui Guia</label>
+        <input asp-for="Guia" class="form-check-input" />
+    </div>
+
+    <div class="mb-3">
+
+        <label asp-for="fk_Guia">Guia</label>
+
+        <select asp-for="fk_Guia" class="form-select">
+
+            <option value="">Selecione um Guia</option>
+
+            @if (ViewBag.Guia != null)
+            {
+                foreach (var item in ViewBag.Guia)
+                {
+                    <option value="@item.IdGuia">@item.NomeGuia</option>
+                }
+            }
+
+        </select>
+
+    </div>
+
+    <button class="btn btn-success">Salvar</button>
+
+</form>

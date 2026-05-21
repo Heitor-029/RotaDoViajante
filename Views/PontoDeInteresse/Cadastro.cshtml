@@ -1,31 +1,32 @@
 ﻿@model RotaDoViajante.Models.PontoDeInteresse
+@{
+    ViewData["Title"] = "Ponto de Interesse";
+}
 
-<h2>Cadastro de Ponto de Interesse</h2>
+<h2>Ponto de Interesse</h2>
 
 <form asp-controller="PontoDeInteresse" asp-action="SalvarPonto">
 
     <div class="mb-3">
-        <label asp-for="Localizacao"></label>
+        <label asp-for="Localizacao">Localização</label>
         <input asp-for="Localizacao" class="form-control" />
     </div>
 
     <div class="mb-3">
-        <label asp-for="Descricao"></label>
-        <textarea asp-for="Descricao" class="form-control"></textarea>
+        <label asp-for="Descricao">Descrição</label>
+        <input asp-for="Descricao" class="form-control" />
     </div>
 
     <div class="mb-3">
-        <label asp-for="Altitude"></label>
+        <label asp-for="Altitude">Altitude</label>
         <input asp-for="Altitude" class="form-control" />
     </div>
 
     <div class="mb-3">
-        <label asp-for="Latitude"></label>
+        <label asp-for="Latitude">Latitude</label>
         <input asp-for="Latitude" class="form-control" />
     </div>
 
-    <button class="btn btn-warning">
-        Salvar
-    </button>
+    <button class="btn btn-success">Salvar</button>
 
 </form>
