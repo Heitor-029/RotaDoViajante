@@ -30,23 +30,8 @@
                 <input asp-for="SenhaUsuario" type="password" class="form-control" />
             </div>
 
-            <div class="mb-3">
-                <label asp-for="FkTiUsu">Tipo Usuário</label>
-
-                <select asp-for="FkTiUsu" class="form-select">
-
-                    <option value="">Selecione</option>
-
-                    @if (ViewBag.TipoUsuario != null)
-                    {
-                        foreach (var item in ViewBag.TipoUsuario)
-                        {
-                            <option value="@item.IdTiUsu">@item.NomeTiUsu</option>
-                        }
-                    }
-
-                </select>
-            </div>
+           
+          
 
             <button type="submit" class="btn btn-success">Salvar</button>
 
