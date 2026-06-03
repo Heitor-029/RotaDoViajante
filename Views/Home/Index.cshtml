@@ -1,8 +1,38 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
+<head>
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+</head>
+<section class="hero">
 
-<div class="text-center">
-    <h1 class="display-4">Bem vindo</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+    <div class="hero-overlay">
+
+        <div class="container text-center text-white">
+
+            <h1 class="display-3 fw-bold">
+
+                Explore Santa Fé do Sul
+
+            </h1>
+
+            <p class="lead">
+
+                Encontre Sua Própia Rota.
+
+            </p>
+
+            <a asp-controller="Passeio"
+               asp-action="Index"
+               class="btn btn-warning btn-lg">
+
+                Explorar Passeios
+
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
