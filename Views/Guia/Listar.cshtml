@@ -1,5 +1,77 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<RotaDoViajante.Models.Guia>
+
 @{
+    ViewData["Title"] = "Lista de Guias";
 }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <h2>Lista de Guias</h2>
+
+    <a asp-controller="Guia"
+       asp-action="Cadastro"
+       class="btn btn-info">
+
+        Novo Cadastro
+
+    </a>
+
+</div>
+
+<table class="table table-striped table-hover">
+
+    <thead class="table-dark">
+
+        <tr>
+
+            <td>ID</td>
+            <td>Nome</td>
+            <td>CPF</td>
+            <td>Experiência</td>
+            <td>Email</td>
+            <td>Telefone</td>
+            <td>Ações</td>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        @foreach (var item in Model)
+        {
+            <tr>
+
+                <td>@item.IdGuia</td>
+                <td>@item.NomeGuia</td>
+                <td>@item.CPFGuia</td>
+                <td>@item.ExperienciaGuia</td>
+                <td>@item.EmailGuia</td>
+                <td>@item.TelefoneGuia</td>
+
+                <td>
+
+                    <a asp-action="Editar"
+                       asp-route-id="@item.IdGuia"
+                       class="btn btn-primary">
+
+                        Editar
+
+                    </a>
+
+                    <a asp-action="Detalhes"
+                       asp-route-id="@item.IdGuia"
+                       class="btn btn-secondary">
+
+                        Detalhes
+
+                    </a>
+
+                </td>
+
+            </tr>
+        }
+
+    </tbody>
+
+</table>

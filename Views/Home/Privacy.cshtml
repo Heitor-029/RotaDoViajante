@@ -1,6 +1,105 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Política de Privacidade";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div  class="container mt-5 mb-5">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header bg-primary text-white bg-dark">
+
+            <h2 class="mb-0">
+                Política de Privacidade
+            </h2>
+
+        </div>
+
+        <div class="card-body">
+
+            <p class="text-muted">
+                Última atualização: @DateTime.Now.ToString("dd/MM/yyyy")
+            </p>
+
+            <h4>1. Introdução</h4>
+
+            <p>
+                O sistema <strong>Rota do Viajante</strong> valoriza a privacidade
+                dos seus usuários e está comprometido com a proteção dos dados
+                pessoais coletados durante a utilização da plataforma.
+            </p>
+
+            <hr />
+
+            <h4>2. Dados Coletados</h4>
+
+            <ul>
+                <li>Nome completo;</li>
+                <li>Endereço de e-mail;</li>
+                <li>Telefone para contato;</li>
+                <li>Senha de acesso criptografada;</li>
+                <li>Informações de navegação e uso da plataforma.</li>
+            </ul>
+
+            <hr />
+
+            <h4>3. Finalidade do Uso dos Dados</h4>
+
+            <p>
+                Os dados são utilizados para gerenciamento de usuários,
+                reservas de passeios, comunicação com guias turísticos,
+                personalização da experiência e melhoria dos serviços.
+            </p>
+
+            <hr />
+
+            <h4>4. Compartilhamento de Informações</h4>
+
+            <p>
+                O Rota do Viajante não vende informações pessoais.
+                Os dados somente poderão ser compartilhados quando
+                exigidos por lei ou necessários para a execução dos serviços.
+            </p>
+
+            <hr />
+
+            <h4>5. Segurança</h4>
+
+            <p>
+                Empregamos medidas técnicas e administrativas para proteger
+                os dados contra acessos não autorizados, alterações,
+                perdas ou divulgação indevida.
+            </p>
+
+            <hr />
+
+            <h4>6. Direitos do Usuário</h4>
+
+            <ul>
+                <li>Acessar seus dados;</li>
+                <li>Solicitar correções;</li>
+                <li>Solicitar exclusão quando permitido por lei;</li>
+                <li>Revogar consentimentos;</li>
+                <li>Solicitar informações sobre tratamento dos dados.</li>
+            </ul>
+
+           
+
+           
+
+        </div>
+
+        <div class="card-footer text-center ">
+
+            <a asp-controller="Home"
+               asp-action="Index"
+               class="btn bg-dark btn-primary">
+
+                Voltar para Home
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>

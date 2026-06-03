@@ -1,5 +1,75 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<RotaDoViajante.Models.PontoDeInteresse>
+
 @{
+    ViewData["Title"] = "Pontos Turísticos";
 }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <h2>Pontos Turísticos</h2>
+
+    <a asp-controller="PontoDeInteresse"
+       asp-action="Cadastro"
+       class="btn btn-info">
+
+        Novo Cadastro
+
+    </a>
+
+</div>
+
+<table class="table table-striped table-hover">
+
+    <thead class="table-dark">
+
+        <tr>
+
+            <td>ID</td>
+            <td>Localização</td>
+            <td>Descrição</td>
+            <td>Altitude</td>
+            <td>Latitude</td>
+            <td>Ações</td>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        @foreach (var item in Model)
+        {
+            <tr>
+
+                <td>@item.IdPontoDeInteresse</td>
+                <td>@item.Localizacao</td>
+                <td>@item.Descricao</td>
+                <td>@item.Altitude</td>
+                <td>@item.Latitude</td>
+
+                <td>
+
+                    <a asp-action="Editar"
+                       asp-route-id="@item.IdPontoDeInteresse"
+                       class="btn btn-primary">
+
+                        Editar
+
+                    </a>
+
+                    <a asp-action="Detalhes"
+                       asp-route-id="@item.IdPontoDeInteresse"
+                       class="btn btn-secondary">
+
+                        Detalhes
+
+                    </a>
+
+                </td>
+
+            </tr>
+        }
+
+    </tbody>
+
+</table>
