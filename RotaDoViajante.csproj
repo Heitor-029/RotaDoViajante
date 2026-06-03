@@ -19,5 +19,9 @@
     <Folder Include="wwwroot\img\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\NovaPasta\" />
+  </ItemGroup>
+
   
 </Project>
