@@ -1,86 +1,97 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RotaDoViajante.Data;
+﻿
+using RotaDoViajante.Config;
 using RotaDoViajante.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RotaDoViajante.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PontoDeInteresseController : ControllerBase
+    public class PontoDeInteresseController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly DbConfig _dbConfig;
 
-        public PontoDeInteresseController(AppDbContext context)
+        public PontoDeInteresseController(DbConfig dbConfig)
         {
-            _context = context;
+            _dbConfig = dbConfig;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PontoDeInteresse>>> GetPontos()
+        public IActionResult Index() => View();
+
+        public IActionResult Cadastro() => View();
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarPonto(PontoDeInteresse ponto)
         {
-            return await _context.PontosDeInteresse.ToListAsync();
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Add(ponto);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao salvar: " + ex.Message);
+                }
+            }
+            return View("Cadastro", ponto);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PontoDeInteresse>> GetPonto(int id)
+        public async Task<IActionResult> Listar()
         {
-            var ponto = await _context.PontosDeInteresse.FindAsync(id);
+            var pontos = await _dbConfig.pontodeinteresse.ToListAsync();
+            return View(pontos);
+        }
 
-            if (ponto == null)
-                return NotFound();
+        public async Task<IActionResult> Editar(int id)
+        {
+            if (id == null) return NotFound();
 
-            return ponto;
+            var ponto = await _dbConfig.pontodeinteresse.FindAsync(id);
+            if (ponto == null) return NotFound();
+
+            return View(ponto);
         }
 
         [HttpPost]
-        public async Task<ActionResult<PontoDeInteresse>> PostPonto(PontoDeInteresse ponto)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarPonto(int id, PontoDeInteresse ponto)
         {
-            _context.PontosDeInteresse.Add(ponto);
-            await _context.SaveChangesAsync();
+            if (id != ponto.IdPontoDeInteresse) return NotFound();
 
-            return CreatedAtAction(
-                nameof(GetPonto),
-                new { id = ponto.IdPontoDeInteresse },
-                ponto
-            );
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Update(ponto);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao editar: " + ex.Message);
+                }
+            }
+            return View("Editar", ponto);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPonto(int id, PontoDeInteresse ponto)
+        public async Task<IActionResult> Excluir(int id)
         {
-            if (id != ponto.IdPontoDeInteresse)
-                return BadRequest();
-
-            _context.Entry(ponto).State = EntityState.Modified;
+            var ponto = await _dbConfig.pontodeinteresse.FindAsync(id);
+            if (ponto == null) return NotFound();
 
             try
             {
-                await _context.SaveChangesAsync();
+                _dbConfig.pontodeinteresse.Remove(ponto);
+                await _dbConfig.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!_context.PontosDeInteresse.Any(p => p.IdPontoDeInteresse == id))
-                    return NotFound();
-
-                throw;
+                TempData["Erro"] = "Erro ao excluir: " + ex.Message;
             }
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePonto(int id)
-        {
-            var ponto = await _context.PontosDeInteresse.FindAsync(id);
-
-            if (ponto == null)
-                return NotFound();
-
-            _context.PontosDeInteresse.Remove(ponto);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return RedirectToAction("Listar");
         }
     }
 }

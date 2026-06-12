@@ -1,70 +1,75 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RotaDoViajante.Data;
+﻿using RotaDoViajante.Config;
 using RotaDoViajante.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RotaDoViajante.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PasseioPontoController : ControllerBase
+    public class PasseioPontoController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly DbConfig _dbConfig;
 
-        public PasseioPontoController(AppDbContext context)
+        public PasseioPontoController(DbConfig dbConfig)
         {
-            _context = context;
+            _dbConfig = dbConfig;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PasseioPonto>>> GetPasseioPontos()
+        public IActionResult Index() => View();
+
+        public IActionResult Cadastro()
         {
-            return await _context.PasseioPontos
-                .Include(pp => pp.Passeio)
-                .Include(pp => pp.PontoDeInteresse)
-                .ToListAsync();
-        }
-
-        [HttpGet("{fkPasseio}/{fkPonto}")]
-        public async Task<ActionResult<PasseioPonto>> GetPasseioPonto(int fkPasseio, int fkPonto)
-        {
-            var passeioPonto = await _context.PasseioPontos
-                .Include(pp => pp.Passeio)
-                .Include(pp => pp.PontoDeInteresse)
-                .FirstOrDefaultAsync(pp => pp.FkPasseio == fkPasseio && pp.FkPonto == fkPonto);
-
-            if (passeioPonto == null)
-                return NotFound();
-
-            return passeioPonto;
+            ViewBag.Passeio = _dbConfig.passeio.ToList();
+            ViewBag.PontoDeInteresse = _dbConfig.pontodeinteresse.ToList();
+            return View();
         }
 
         [HttpPost]
-        public async Task<ActionResult<PasseioPonto>> PostPasseioPonto(PasseioPonto passeioPonto)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarPasseioPonto(PasseioPonto passeioPonto)
         {
-            _context.PasseioPontos.Add(passeioPonto);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(
-                nameof(GetPasseioPonto),
-                new { fkPasseio = passeioPonto.FkPasseio, fkPonto = passeioPonto.FkPonto },
-                passeioPonto
-            );
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Add(passeioPonto);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao salvar: " + ex.Message);
+                }
+            }
+            ViewBag.Passeio = _dbConfig.passeio.ToList();
+            ViewBag.PontoDeInteresse = _dbConfig.pontodeinteresse.ToList();
+            return View("Cadastro", passeioPonto);
         }
 
-        [HttpDelete("{fkPasseio}/{fkPonto}")]
-        public async Task<IActionResult> DeletePasseioPonto(int fkPasseio, int fkPonto)
+        public async Task<IActionResult> Listar()
         {
-            var passeioPonto = await _context.PasseioPontos
-                .FirstOrDefaultAsync(pp => pp.FkPasseio == fkPasseio && pp.FkPonto == fkPonto);
+            var registros = await _dbConfig.passeioponto
+                .Include(pp => pp.Passeio)
+                .Include(pp => pp.PontoDeInteresse)
+                .ToListAsync();
+            return View(registros);
+        }
 
-            if (passeioPonto == null)
-                return NotFound();
+        public async Task<IActionResult> Excluir(int fkPasseio, int fkPonto)
+        {
+            var registro = await _dbConfig.passeioponto
+                .FindAsync(fkPasseio, fkPonto);
+            if (registro == null) return NotFound();
 
-            _context.PasseioPontos.Remove(passeioPonto);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            try
+            {
+                _dbConfig.passeioponto.Remove(registro);
+                await _dbConfig.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = "Erro ao excluir: " + ex.Message;
+            }
+            return RedirectToAction("Listar");
         }
     }
 }

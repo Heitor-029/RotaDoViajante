@@ -1,86 +1,97 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RotaDoViajante.Data;
+﻿
+using RotaDoViajante.Config;
 using RotaDoViajante.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RotaDoViajante.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class GuiaController : ControllerBase
+    public class GuiaController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly DbConfig _dbConfig;
 
-        public GuiaController(AppDbContext context)
+        public GuiaController(DbConfig dbConfig)
         {
-            _context = context;
+            _dbConfig = dbConfig;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Guia>>> GetGuias()
+        public IActionResult Index() => View();
+
+        public IActionResult Cadastro() => View();
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarGuia(Guia guia)
         {
-            return await _context.Guias.ToListAsync();
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Add(guia);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao salvar: " + ex.Message);
+                }
+            }
+            return View("Cadastro", guia);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Guia>> GetGuia(int id)
+        public async Task<IActionResult> Listar()
         {
-            var guia = await _context.Guias.FindAsync(id);
+            var guias = await _dbConfig.guia.ToListAsync();
+            return View(guias);
+        }
 
-            if (guia == null)
-                return NotFound();
+        public async Task<IActionResult> Editar(int id)
+        {
+            if (id == null) return NotFound();
 
-            return guia;
+            var guia = await _dbConfig.guia.FindAsync(id);
+            if (guia == null) return NotFound();
+
+            return View(guia);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Guia>> PostGuia(Guia guia)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarGuia(int id, Guia guia)
         {
-            _context.Guias.Add(guia);
-            await _context.SaveChangesAsync();
+            if (id != guia.IdGuia) return NotFound();
 
-            return CreatedAtAction(
-                nameof(GetGuia),
-                new { id = guia.IdGuia },
-                guia
-            );
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Update(guia);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao editar: " + ex.Message);
+                }
+            }
+            return View("Editar", guia);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutGuia(int id, Guia guia)
+        public async Task<IActionResult> Excluir(int id)
         {
-            if (id != guia.IdGuia)
-                return BadRequest();
-
-            _context.Entry(guia).State = EntityState.Modified;
+            var guia = await _dbConfig.guia.FindAsync(id);
+            if (guia == null) return NotFound();
 
             try
             {
-                await _context.SaveChangesAsync();
+                _dbConfig.guia.Remove(guia);
+                await _dbConfig.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!_context.Guias.Any(g => g.IdGuia == id))
-                    return NotFound();
-
-                throw;
+                TempData["Erro"] = "Erro ao excluir: " + ex.Message;
             }
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteGuia(int id)
-        {
-            var guia = await _context.Guias.FindAsync(id);
-
-            if (guia == null)
-                return NotFound();
-
-            _context.Guias.Remove(guia);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return RedirectToAction("Listar");
         }
     }
 }

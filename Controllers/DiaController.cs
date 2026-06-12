@@ -1,86 +1,97 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RotaDoViajante.Data;
+﻿
+using RotaDoViajante.Config;
 using RotaDoViajante.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RotaDoViajante.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class DiaController : ControllerBase
+    public class DiaController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly DbConfig _dbConfig;
 
-        public DiaController(AppDbContext context)
+        public DiaController(DbConfig dbConfig)
         {
-            _context = context;
+            _dbConfig = dbConfig;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Dia>>> GetDias()
+        public IActionResult Index() => View();
+
+        public IActionResult Cadastro() => View();
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarDia(Dia dia)
         {
-            return await _context.Dias.ToListAsync();
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Add(dia);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao salvar: " + ex.Message);
+                }
+            }
+            return View("Cadastro", dia);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Dia>> GetDia(int id)
+        public async Task<IActionResult> Listar()
         {
-            var dia = await _context.Dias.FindAsync(id);
+            var dias = await _dbConfig.dia.ToListAsync();
+            return View(dias);
+        }
 
-            if (dia == null)
-                return NotFound();
+        public async Task<IActionResult> Editar(int id)
+        {
+            if (id == null) return NotFound();
 
-            return dia;
+            var dia = await _dbConfig.dia.FindAsync(id);
+            if (dia == null) return NotFound();
+
+            return View(dia);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Dia>> PostDia(Dia dia)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarDia(int id, Dia dia)
         {
-            _context.Dias.Add(dia);
-            await _context.SaveChangesAsync();
+            if (id != dia.IdDia) return NotFound();
 
-            return CreatedAtAction(
-                nameof(GetDia),
-                new { id = dia.IdDia },
-                dia
-            );
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Update(dia);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao editar: " + ex.Message);
+                }
+            }
+            return View("Editar", dia);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutDia(int id, Dia dia)
+        public async Task<IActionResult> Excluir(int id)
         {
-            if (id != dia.IdDia)
-                return BadRequest();
-
-            _context.Entry(dia).State = EntityState.Modified;
+            var dia = await _dbConfig.dia.FindAsync(id);
+            if (dia == null) return NotFound();
 
             try
             {
-                await _context.SaveChangesAsync();
+                _dbConfig.dia.Remove(dia);
+                await _dbConfig.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!_context.Dias.Any(d => d.IdDia == id))
-                    return NotFound();
-
-                throw;
+                TempData["Erro"] = "Erro ao excluir: " + ex.Message;
             }
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDia(int id)
-        {
-            var dia = await _context.Dias.FindAsync(id);
-
-            if (dia == null)
-                return NotFound();
-
-            _context.Dias.Remove(dia);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return RedirectToAction("Listar");
         }
     }
 }

@@ -1,90 +1,106 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RotaDoViajante.Data;
+﻿
+using RotaDoViajante.Config;
 using RotaDoViajante.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RotaDoViajante.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PasseioController : ControllerBase
+    public class PasseioController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly DbConfig _dbConfig;
 
-        public PasseioController(AppDbContext context)
+        public PasseioController(DbConfig dbConfig)
         {
-            _context = context;
+            _dbConfig = dbConfig;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Passeio>>> GetPasseios()
+        public IActionResult Index() => View();
+
+        public IActionResult Cadastro()
         {
-            return await _context.Passeios
-                .Include(p => p.GuiaNavigation)
-                .ToListAsync();
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Passeio>> GetPasseio(int id)
-        {
-            var passeio = await _context.Passeios
-                .Include(p => p.GuiaNavigation)
-                .FirstOrDefaultAsync(p => p.IdPasseio == id);
-
-            if (passeio == null)
-                return NotFound();
-
-            return passeio;
+            ViewBag.Guia = _dbConfig.guia.ToList();
+            return View();
         }
 
         [HttpPost]
-        public async Task<ActionResult<Passeio>> PostPasseio(Passeio passeio)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarPasseio(Passeio passeio)
         {
-            _context.Passeios.Add(passeio);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(
-                nameof(GetPasseio),
-                new { id = passeio.IdPasseio },
-                passeio
-            );
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Add(passeio);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao salvar: " + ex.Message);
+                }
+            }
+            ViewBag.Guia = _dbConfig.guia.ToList();
+            return View("Cadastro", passeio);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPasseio(int id, Passeio passeio)
+        public async Task<IActionResult> Listar()
         {
-            if (id != passeio.IdPasseio)
-                return BadRequest();
+            var passeios = await _dbConfig.passeio
+                .Include(p => p.Guia)
+                .ToListAsync();
+            return View(passeios);
+        }
 
-            _context.Entry(passeio).State = EntityState.Modified;
+        public async Task<IActionResult> Editar(int id)
+        {
+            if (id == null) return NotFound();
+
+            var passeio = await _dbConfig.passeio.FindAsync(id);
+            if (passeio == null) return NotFound();
+
+            ViewBag.Guia = await _dbConfig.guia.ToListAsync();
+            return View(passeio);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarPasseio(int id, Passeio passeio)
+        {
+            if (id != passeio.IdPasseio) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Update(passeio);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao editar: " + ex.Message);
+                }
+            }
+            ViewBag.Guia = await _dbConfig.guia.ToListAsync();
+            return View("Editar", passeio);
+        }
+
+        public async Task<IActionResult> Excluir(int id)
+        {
+            var passeio = await _dbConfig.passeio.FindAsync(id);
+            if (passeio == null) return NotFound();
 
             try
             {
-                await _context.SaveChangesAsync();
+                _dbConfig.passeio.Remove(passeio);
+                await _dbConfig.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!_context.Passeios.Any(p => p.IdPasseio == id))
-                    return NotFound();
-
-                throw;
+                TempData["Erro"] = "Erro ao excluir: " + ex.Message;
             }
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePasseio(int id)
-        {
-            var passeio = await _context.Passeios.FindAsync(id);
-
-            if (passeio == null)
-                return NotFound();
-
-            _context.Passeios.Remove(passeio);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return RedirectToAction("Listar");
         }
     }
 }

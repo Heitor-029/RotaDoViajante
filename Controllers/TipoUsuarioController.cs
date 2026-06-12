@@ -1,86 +1,97 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RotaDoViajante.Data;
+﻿
+using RotaDoViajante.Config;
 using RotaDoViajante.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RotaDoViajante.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class TipoUsuarioController : ControllerBase
+    public class TipoUsuarioController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly DbConfig _dbConfig;
 
-        public TipoUsuarioController(AppDbContext context)
+        public TipoUsuarioController(DbConfig dbConfig)
         {
-            _context = context;
+            _dbConfig = dbConfig;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<TipoUsuario>>> GetTiposUsuario()
+        public IActionResult Index() => View();
+
+        public IActionResult Cadastro() => View();
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarTipoUsuario(TipoUsuario tipoUsuario)
         {
-            return await _context.TiposUsuario.ToListAsync();
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Add(tipoUsuario);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao salvar: " + ex.Message);
+                }
+            }
+            return View("Cadastro", tipoUsuario);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<TipoUsuario>> GetTipoUsuario(int id)
+        public async Task<IActionResult> Listar()
         {
-            var tipoUsuario = await _context.TiposUsuario.FindAsync(id);
+            var tipos = await _dbConfig.tipousuario.ToListAsync();
+            return View(tipos);
+        }
 
-            if (tipoUsuario == null)
-                return NotFound();
+        public async Task<IActionResult> Editar(int id)
+        {
+            if (id == null) return NotFound();
 
-            return tipoUsuario;
+            var tipo = await _dbConfig.tipousuario.FindAsync(id);
+            if (tipo == null) return NotFound();
+
+            return View(tipo);
         }
 
         [HttpPost]
-        public async Task<ActionResult<TipoUsuario>> PostTipoUsuario(TipoUsuario tipoUsuario)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarTipoUsuario(int id, TipoUsuario tipoUsuario)
         {
-            _context.TiposUsuario.Add(tipoUsuario);
-            await _context.SaveChangesAsync();
+            if (id != tipoUsuario.IdTiUsu) return NotFound();
 
-            return CreatedAtAction(
-                nameof(GetTipoUsuario),
-                new { id = tipoUsuario.IdTiUsu },
-                tipoUsuario
-            );
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Update(tipoUsuario);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao editar: " + ex.Message);
+                }
+            }
+            return View("Editar", tipoUsuario);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutTipoUsuario(int id, TipoUsuario tipoUsuario)
+        public async Task<IActionResult> Excluir(int id)
         {
-            if (id != tipoUsuario.IdTiUsu)
-                return BadRequest();
-
-            _context.Entry(tipoUsuario).State = EntityState.Modified;
+            var tipo = await _dbConfig.tipousuario.FindAsync(id);
+            if (tipo == null) return NotFound();
 
             try
             {
-                await _context.SaveChangesAsync();
+                _dbConfig.tipousuario.Remove(tipo);
+                await _dbConfig.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!_context.TiposUsuario.Any(t => t.IdTiUsu == id))
-                    return NotFound();
-
-                throw;
+                TempData["Erro"] = "Erro ao excluir: " + ex.Message;
             }
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTipoUsuario(int id)
-        {
-            var tipoUsuario = await _context.TiposUsuario.FindAsync(id);
-
-            if (tipoUsuario == null)
-                return NotFound();
-
-            _context.TiposUsuario.Remove(tipoUsuario);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return RedirectToAction("Listar");
         }
     }
 }

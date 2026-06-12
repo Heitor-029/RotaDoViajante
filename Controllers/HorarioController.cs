@@ -1,86 +1,97 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RotaDoViajante.Data;
+﻿
+using RotaDoViajante.Config;
 using RotaDoViajante.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RotaDoViajante.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class HorarioController : ControllerBase
+    public class HorarioController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly DbConfig _dbConfig;
 
-        public HorarioController(AppDbContext context)
+        public HorarioController(DbConfig dbConfig)
         {
-            _context = context;
+            _dbConfig = dbConfig;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Horario>>> GetHorarios()
+        public IActionResult Index() => View();
+
+        public IActionResult Cadastro() => View();
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarHorario(Horario horario)
         {
-            return await _context.Horarios.ToListAsync();
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Add(horario);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao salvar: " + ex.Message);
+                }
+            }
+            return View("Cadastro", horario);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Horario>> GetHorario(int id)
+        public async Task<IActionResult> Listar()
         {
-            var horario = await _context.Horarios.FindAsync(id);
+            var horarios = await _dbConfig.horario.ToListAsync();
+            return View(horarios);
+        }
 
-            if (horario == null)
-                return NotFound();
+        public async Task<IActionResult> Editar(int id)
+        {
+            if (id == null) return NotFound();
 
-            return horario;
+            var horario = await _dbConfig.horario.FindAsync(id);
+            if (horario == null) return NotFound();
+
+            return View(horario);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Horario>> PostHorario(Horario horario)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarHorario(int id, Horario horario)
         {
-            _context.Horarios.Add(horario);
-            await _context.SaveChangesAsync();
+            if (id != horario.IdHorario) return NotFound();
 
-            return CreatedAtAction(
-                nameof(GetHorario),
-                new { id = horario.IdHorario },
-                horario
-            );
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Update(horario);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao editar: " + ex.Message);
+                }
+            }
+            return View("Editar", horario);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutHorario(int id, Horario horario)
+        public async Task<IActionResult> Excluir(int id)
         {
-            if (id != horario.IdHorario)
-                return BadRequest();
-
-            _context.Entry(horario).State = EntityState.Modified;
+            var horario = await _dbConfig.horario.FindAsync(id);
+            if (horario == null) return NotFound();
 
             try
             {
-                await _context.SaveChangesAsync();
+                _dbConfig.horario.Remove(horario);
+                await _dbConfig.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!_context.Horarios.Any(h => h.IdHorario == id))
-                    return NotFound();
-
-                throw;
+                TempData["Erro"] = "Erro ao excluir: " + ex.Message;
             }
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteHorario(int id)
-        {
-            var horario = await _context.Horarios.FindAsync(id);
-
-            if (horario == null)
-                return NotFound();
-
-            _context.Horarios.Remove(horario);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return RedirectToAction("Listar");
         }
     }
 }

@@ -1,78 +1,78 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RotaDoViajante.Data;
+﻿using RotaDoViajante.Config;
 using RotaDoViajante.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RotaDoViajante.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PDHController : ControllerBase
+    public class PDHController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly DbConfig _dbConfig;
 
-        public PDHController(AppDbContext context)
+        public PDHController(DbConfig dbConfig)
         {
-            _context = context;
+            _dbConfig = dbConfig;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PDH>>> GetPDHs()
+        public IActionResult Index() => View();
+
+        public IActionResult Cadastro()
         {
-            return await _context.PDHs
+            ViewBag.PontoDeInteresse = _dbConfig.pontodeinteresse.ToList();
+            ViewBag.Dia = _dbConfig.dia.ToList();
+            ViewBag.Horario = _dbConfig.horario.ToList();
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarPDH(PDH pdh)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Add(pdh);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao salvar: " + ex.Message);
+                }
+            }
+            ViewBag.PontoDeInteresse = _dbConfig.pontodeinteresse.ToList();
+            ViewBag.Dia = _dbConfig.dia.ToList();
+            ViewBag.Horario = _dbConfig.horario.ToList();
+            return View("Cadastro", pdh);
+        }
+
+        public async Task<IActionResult> Listar()
+        {
+            var registros = await _dbConfig.pdh
                 .Include(p => p.PontoDeInteresse)
                 .Include(p => p.Dia)
                 .Include(p => p.Horario)
                 .ToListAsync();
+            return View(registros);
         }
 
-        [HttpGet("{fkPonto}/{fkDia}/{fkHorario}")]
-        public async Task<ActionResult<PDH>> GetPDH(int fkPonto, int fkDia, int fkHorario)
+        public async Task<IActionResult> Excluir(int fkPonto, int fkDia, int fkHorario)
         {
-            var pdh = await _context.PDHs
-                .Include(p => p.PontoDeInteresse)
-                .Include(p => p.Dia)
-                .Include(p => p.Horario)
-                .FirstOrDefaultAsync(p =>
-                    p.FkPonto == fkPonto &&
-                    p.FkDia == fkDia &&
-                    p.FkHorario == fkHorario);
+            var registro = await _dbConfig.pdh
+                .FindAsync(fkPonto, fkDia, fkHorario);
+            if (registro == null) return NotFound();
 
-            if (pdh == null)
-                return NotFound();
-
-            return pdh;
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<PDH>> PostPDH(PDH pdh)
-        {
-            _context.PDHs.Add(pdh);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(
-                nameof(GetPDH),
-                new { fkPonto = pdh.FkPonto, fkDia = pdh.FkDia, fkHorario = pdh.FkHorario },
-                pdh
-            );
-        }
-
-        [HttpDelete("{fkPonto}/{fkDia}/{fkHorario}")]
-        public async Task<IActionResult> DeletePDH(int fkPonto, int fkDia, int fkHorario)
-        {
-            var pdh = await _context.PDHs
-                .FirstOrDefaultAsync(p =>
-                    p.FkPonto == fkPonto &&
-                    p.FkDia == fkDia &&
-                    p.FkHorario == fkHorario);
-
-            if (pdh == null)
-                return NotFound();
-
-            _context.PDHs.Remove(pdh);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            try
+            {
+                _dbConfig.pdh.Remove(registro);
+                await _dbConfig.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = "Erro ao excluir: " + ex.Message;
+            }
+            return RedirectToAction("Listar");
         }
     }
 }

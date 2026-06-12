@@ -1,71 +1,76 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RotaDoViajante.Data;
+﻿//jesus amado pq q essa porra nn conecta?
+using RotaDoViajante.Config;
 using RotaDoViajante.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace RotaDoViajante.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UsuarioPasseioController : ControllerBase
+    public class UsuarioPasseioController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly DbConfig _dbConfig;
 
-        public UsuarioPasseioController(AppDbContext context)
+        public UsuarioPasseioController(DbConfig dbConfig)
         {
-            _context = context;
+            _dbConfig = dbConfig;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UsuarioPasseio>>> GetUsuarioPasseios()
+        public IActionResult Index() => View();
+
+        public IActionResult Cadastro()
         {
-            return await _context.UsuarioPasseios
-                .Include(up => up.Usuario)
-                .Include(up => up.Passeio)
-                .ToListAsync();
-        }
-
-        [HttpGet("{fkPasseio}/{fkUsuario}")]
-        public async Task<ActionResult<UsuarioPasseio>> GetUsuarioPasseio(int fkPasseio, int fkUsuario)
-        {
-            var usuarioPasseio = await _context.UsuarioPasseios
-                .Include(up => up.Usuario)
-                .Include(up => up.Passeio)
-                .FirstOrDefaultAsync(up => up.FkPasseio == fkPasseio && up.FkUsuario == fkUsuario);
-
-            if (usuarioPasseio == null)
-                return NotFound();
-
-            return usuarioPasseio;
+            ViewBag.Passeio = _dbConfig.passeio.ToList();
+            ViewBag.Usuario = _dbConfig.usuario.ToList();
+            return View();
         }
 
         [HttpPost]
-        public async Task<ActionResult<UsuarioPasseio>> PostUsuarioPasseio(UsuarioPasseio usuarioPasseio)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalvarUsuarioPasseio(UsuarioPasseio usuarioPasseio)
         {
-            _context.UsuarioPasseios.Add(usuarioPasseio);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(
-                nameof(GetUsuarioPasseio),
-                new { fkPasseio = usuarioPasseio.FkPasseio, fkUsuario = usuarioPasseio.FkUsuario },
-                usuarioPasseio
-            );
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _dbConfig.Add(usuarioPasseio);
+                    await _dbConfig.SaveChangesAsync();
+                    return RedirectToAction("Listar");
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError(string.Empty, "Erro ao salvar: " + ex.Message);
+                }
+            }
+            ViewBag.Passeio = _dbConfig.passeio.ToList();
+            ViewBag.Usuario = _dbConfig.usuario.ToList();
+            return View("Cadastro", usuarioPasseio);
         }
 
-        [HttpDelete("{fkPasseio}/{fkUsuario}")]
-        public async Task<IActionResult> DeleteUsuarioPasseio(int fkPasseio, int fkUsuario)
+        public async Task<IActionResult> Listar()
         {
-            var usuarioPasseio = await _context.UsuarioPasseios
-                .FirstOrDefaultAsync(up => up.FkPasseio == fkPasseio && up.FkUsuario == fkUsuario);
+            var registros = await _dbConfig.usuariopasseio
+                .Include(up => up.Passeio)
+                .Include(up => up.Usuario)
+                .ToListAsync();
+            return View(registros);
+        }
 
-            if (usuarioPasseio == null)
-                return NotFound();
+        public async Task<IActionResult> Excluir(int fkPasseio, int fkUsuario)
+        {
+            var registro = await _dbConfig.usuariopasseio
+                .FindAsync(fkPasseio, fkUsuario);
+            if (registro == null) return NotFound();
 
-            _context.UsuarioPasseios.Remove(usuarioPasseio);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            try
+            {
+                _dbConfig.usuariopasseio.Remove(registro);
+                await _dbConfig.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = "Erro ao excluir: " + ex.Message;
+            }
+            return RedirectToAction("Listar");
         }
     }
-
 }
